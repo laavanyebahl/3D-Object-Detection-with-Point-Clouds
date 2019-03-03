@@ -33,7 +33,6 @@ public:
 
 private:
   ros::NodeHandle nh_;
-  bool demo_;
   ros::Subscriber pcl_sub_;
   ros::Publisher pcl_pub_;
   tf::TransformListener listener_;
@@ -41,14 +40,9 @@ private:
 
   void pclCallback(const sensor_msgs::PointCloud2ConstPtr& pcl_msg)
   {
-    float standard_deviation = 0.025;
     listener_.waitForTransform("world", "camera_link", ros::Time::now(), ros::Duration(1.0));
     pcl_ros::transformPointCloud("world", *pcl_msg, *buffer_, listener_);
-
-    if(demo_)
-    {
-      pcl_pub_.publish(buffer_);
-    }
+    pcl_pub_.publish(buffer_);
   }
 };  // End of class CloudTransformer
 
