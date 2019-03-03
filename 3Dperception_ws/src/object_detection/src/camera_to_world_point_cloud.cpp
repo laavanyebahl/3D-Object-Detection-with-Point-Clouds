@@ -19,10 +19,7 @@
 class CloudTransformer
 {
 public:
-  explicit CloudTransformer(ros::NodeHandle nh)
-    : nh_(nh),
-      demo_(0)
-  {
+  explicit CloudTransformer(ros::NodeHandle nh): nh_(nh)  {
     // Define Publishers and Subscribers here
     pcl_sub_ = nh_.subscribe("/camera/depth/color/points", 1, &CloudTransformer::pclCallback, this);
     pcl_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/stereo/world/points", 1);
