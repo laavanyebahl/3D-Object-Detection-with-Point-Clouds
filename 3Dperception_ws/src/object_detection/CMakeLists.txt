@@ -18,11 +18,26 @@ find_package(catkin REQUIRED COMPONENTS
   roslint
   sensor_msgs
 )
+
+set(CMAKE_CUDA_COMPILER  /usr/local/cuda-9.0/bin/nvcc)
+
+find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
+find_package(PCL REQUIRED)
+add_definitions(${PCL_DEFINITIONS})
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+find_package(CUDA REQUIRED)
+
+#Include the FindCUDA script
+INCLUDE(FindCUDA)
+
+include_directories(include
+                    ${catkin_INCLUDE_DIRS})
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -55,16 +70,18 @@ find_package(Boost REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   DetectedObject.msg
+   DetectedObjectsArray.msg
+ )
 
 ## Generate services in the 'srv' folder
-#add_service_files(
-#  FILES
-#)
+add_service_files(
+  FILES
+	GetNormals.srv
+)
+
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -78,6 +95,7 @@ generate_messages(
  DEPENDENCIES
  std_msgs
  geometry_msgs
+ sensor_msgs
 )
 
 ################################################
@@ -95,10 +113,11 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
+generate_dynamic_reconfigure_options(
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
-# )
+#		config/Pcl.cf
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -110,9 +129,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+	INCLUDE_DIRS include
 #  CATKIN_DEPENDS sensor_msgs
 #  DEPENDS system_lib
+	CATKIN_DEPENDS message_runtime
 )
 
 ###########
@@ -133,6 +153,7 @@ include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(camera_to_world_point_cloud src/camera_to_world_point_cloud.cpp)
+add_executable(object_detection_pipeline_cpp src/object_detection_pipeline_cpp.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -146,6 +167,8 @@ add_dependencies(camera_to_world_point_cloud ${${PROJECT_NAME}_EXPORTED_TARGETS}
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(camera_to_world_point_cloud ${catkin_LIBRARIES})
+target_link_libraries(object_detection_pipeline_cpp ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##
