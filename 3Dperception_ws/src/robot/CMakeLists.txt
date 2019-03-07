@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roslint
   sensor_msgs
+	urdf
+	xacro
 )
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
@@ -106,7 +108,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  CATKIN_DEPENDS sensor_msgs
+  CATKIN_DEPENDS sensor_msgs 
 #  DEPENDS system_lib
 )
 
@@ -117,7 +119,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
-
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -172,6 +173,11 @@ include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
+install(DIRECTORY images meshes launch rviz urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 
 #############
 ## Testing ##
