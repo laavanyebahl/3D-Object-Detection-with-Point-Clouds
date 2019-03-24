@@ -2,6 +2,7 @@
 <robot name="robot" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find robot)/urdf/common_properties.xacro"/>
   <xacro:include filename="$(find robot)/urdf/robot.gazebo.xacro"/>
+  <xacro:include filename="$(find realsense2_camera)/urdf/_d435.urdf.xacro"/>
 
   <!--Links-->
   <!-- <link name="world"/> -->
@@ -194,33 +195,41 @@
     </inertial>
   </link> -->
 
-  <joint name="camera_joint" type="fixed">
-    <origin xyz="0.073 -0.011 0.084" rpy="0 0 0"/>
+
+  <joint name="base_to_camera_shaft_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.092" rpy="0 0 0"/>
     <parent link="base_link"/>
-    <child link="camera_link"/>
+    <child link="camera_shaft_link"/>
   </joint>
 
-  <link name="camera_link">
-    <collision>
-      <origin xyz="0.005 0.011 0.013" rpy="0 0 0"/>
+  <link name="camera_shaft_link">
+    <visual>
+      <origin xyz="0 0 0.092" rpy="0 0 0" />
       <geometry>
-        <box size="0.015 0.030 0.027"/>
+        <box size="0.02 0.02 0.2"/>
       </geometry>
-    </collision>
+      <material name="white"/>
+    </visual>
   </link>
 
-  <joint name="camera_rgb_joint" type="fixed">
-    <origin xyz="0.003 0.011 0.009" rpy="0 0 0"/>
-    <parent link="camera_link"/>
-    <child link="camera_rgb_frame"/>
+  <joint name="camera_shaft_to_camera_joint" type="fixed">
+    <origin xyz="0.02 0.0 0.17" rpy="0 0.4 0"/>
+    <parent link="camera_shaft_link"/>
+    <child link="camera_mount_link"/>
   </joint>
-  <link name="camera_rgb_frame"/>
 
-  <joint name="camera_rgb_optical_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="-1.57 0 -1.57"/>
-    <parent link="camera_rgb_frame"/>
-    <child link="camera_rgb_optical_frame"/>
-  </joint>
-  <link name="camera_rgb_optical_frame"/>
+  <link name="camera_mount_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.02 0.02"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <sensor_d435 parent="camera_mount_link">
+    <origin xyz="0 0 0.01" rpy="0 0 0"/>
+  </sensor_d435>
 
 </robot>
