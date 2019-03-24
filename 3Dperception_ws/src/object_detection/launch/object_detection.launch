@@ -11,9 +11,9 @@
   </include>
 
 	<!--camera_to_world_point_cloud  node-->
-	<!-- <node name="camera_to_world_point_cloud" pkg="object_detection" type="camera_to_world_point_cloud"
+	<node name="camera_to_world_point_cloud" pkg="object_detection" type="camera_to_world_point_cloud"
     respawn="false" output="screen">
-  </node> -->
+  </node>
 
   <node pkg="object_detection" name="object_detection_pipeline" type="object_detection_pipeline_cpp" output="screen">
   </node>

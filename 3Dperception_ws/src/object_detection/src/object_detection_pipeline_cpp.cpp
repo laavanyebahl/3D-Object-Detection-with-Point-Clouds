@@ -342,6 +342,6 @@ int main(int argc, char** argv)
   pb_color_clustered = nh.advertise<pcl::PCLPointCloud2> ("/color_clustered_cloud", 1);
   pb_object_3D_bbox =  nh.advertise<visualization_msgs::Marker>("/object_3D_bbox", 100);
 
-  ros::Subscriber sub = nh.subscribe<pcl::PCLPointCloud2>("/camera/depth/color/points", 1, cloud_cb);
+  ros::Subscriber sub = nh.subscribe<pcl::PCLPointCloud2>("/base_footprint/points", 1, cloud_cb);
   ros::spin();
 }
