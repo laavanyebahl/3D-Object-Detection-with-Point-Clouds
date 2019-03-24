@@ -1,12 +1,16 @@
 <launch>
 
+  <arg name="visualize" default="true" />
+
   <!--spawn a robot in gazebo world-->
   <!-- < <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false"
     output="screen" args="-urdf -param robot_description
     -x 0 -y -0 -z 0 -R 0 -P 0 -Y 0 -model pr2 "/> -->
 
     <!--Include the robot model-->
-    <include file="$(find robot)/launch/robot_model.launch"/>
+    <include file="$(find robot)/launch/robot_model.launch">
+      <arg name="visualize" value="$(arg visualize)" />
+    </include>
 
     <!--Include the object detection launch files-->
     <!-- <include file="$(find object_detection)/launch/object_detection.launch"/> -->

@@ -1,13 +1,14 @@
 <launch>
+
+  <!--Include robot description-->
+  <include file="$(find robot)/launch/robot.launch">
+    <arg name="visualize" value="false" />
+  </include>
+
   <!--Include description and control launch files-->
   <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="filters" value="pointcloud" />
   </include>
-
-  <!--spawn a robot in gazebo world-->
-  <!-- <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false"
-    output="screen" args="-urdf -param robot_description
-    -x 0 -y -0 -z 0 -R 0 -P 0 -Y 0 -model pr2 "/> -->
 
 	<!--camera_to_world_point_cloud  node-->
 	<!-- <node name="camera_to_world_point_cloud" pkg="object_detection" type="camera_to_world_point_cloud"
@@ -16,5 +17,7 @@
 
   <node pkg="object_detection" name="object_detection_pipeline" type="object_detection_pipeline_cpp" output="screen">
   </node>
+
+  <node name="rviz_object_detection" pkg="rviz" type="rviz" args="-d $(find object_detection)/rviz/object_detection.rviz" required="true" />
 
 </launch>
