@@ -39,7 +39,7 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> CloudType;
 ros::Publisher pb_filtered_cloud;
 ros::Publisher pb_segmented_cloud;
 ros::Publisher pb_color_clustered;
-ros::Publisher pb_object_marker;
+ros::Publisher pb_object_3D_bbox;
 
 //----------------------------------------------------------------------------------
 //Voxel Grid Downsampling filter
@@ -102,16 +102,16 @@ pcl::PCLPointCloud2::Ptr passthrough_filter_vertical(const pcl::PCLPointCloud2Co
 //----------------------------------------------------------------------------------
 // RANSAC plane segmentation
 //----------------------------------------------------------------------------------
-pcl::PCLPointCloud2::Ptr ransac_plane_segmentation(const pcl::PCLPointCloud2ConstPtr& cloud){
+void ransac_plane_segmentation(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PCLPointCloud2::Ptr segmented_objects_cloud, pcl::ModelCoefficients::Ptr plane_coefficients ){
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr white_cloud(new pcl::PointCloud<pcl::PointXYZ> );
   pcl::fromPCLPointCloud2(*cloud, *white_cloud);
 
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
 
   pcl::PCLPointCloud2::Ptr extracted_plane (new pcl::PCLPointCloud2());
-  pcl::PCLPointCloud2::Ptr extracted_objects (new pcl::PCLPointCloud2());
+  // pcl::PCLPointCloud2::Ptr extracted_objects (new pcl::PCLPointCloud2());
 
   // Create the segmentation object
   pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -123,7 +123,7 @@ pcl::PCLPointCloud2::Ptr ransac_plane_segmentation(const pcl::PCLPointCloud2Cons
   seg.setDistanceThreshold (0.008); //0.006 // max distance
 
   seg.setInputCloud (white_cloud);
-  seg.segment (*inliers, *coefficients);
+  seg.segment (*inliers, *plane_coefficients);
 
   if (inliers->indices.size () == 0)
   {
@@ -142,9 +142,10 @@ pcl::PCLPointCloud2::Ptr ransac_plane_segmentation(const pcl::PCLPointCloud2Cons
 
   // Remove the planar inliers, extract the rest
   extract.setNegative (true);
-  extract.filter (*extracted_objects);
+  // extract.filter (*extracted_objects);
+  extract.filter (*segmented_objects_cloud);
 
-  return extracted_objects;
+  // return extracted_objects;
 }
 
 
@@ -187,7 +188,8 @@ uint32_t rgb_to_float(Color color){
 //----------------------------------------------------------------------------------
 // Create Cluster-Mask Point Cloud to visualize each cluster separately
 //----------------------------------------------------------------------------------
-pcl::PCLPointCloud2::Ptr color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud2ConstPtr& segmented_objects_cloud, const std::vector<pcl::PointIndices> &cluster_indices, std::vector<object_detection::Object> &objects){
+pcl::PCLPointCloud2::Ptr color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud2ConstPtr& segmented_objects_cloud,
+  const std::vector<pcl::PointIndices> &cluster_indices, const pcl::ModelCoefficients::Ptr plane_coefficients , std::vector<object_detection::Object> &objects){
 
   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_masked_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -213,25 +215,31 @@ pcl::PCLPointCloud2::Ptr color_euclidean_clusters_and_get_3D_bounding_boxes(cons
     pcl::PointIndices::Ptr indexes(new pcl::PointIndices);
     *indexes = cluster_indices[i];
 
-    /**
+    //----------------------------------------------------------------------------------
+    // BOUNDING BOX DETECTION
     extract.setIndices(indexes);
-    pcl::PCLPointCloud2::Ptr object_cloud(new pcl::PCLPointCloud2);
+    pcl::PCLPointCloud2::Ptr object_cloud (new pcl::PCLPointCloud2);
     extract.filter(*object_cloud);
 
-    pcl::PCLPointCloud2::Ptr extract_out(new pcl::PCLPointCloud2);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr white_object_cloud(new pcl::PointCloud<pcl::PointXYZRGB> );
+    pcl::fromPCLPointCloud2(*object_cloud, *white_object_cloud);
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_out (new pcl::PointCloud<pcl::PointXYZRGB>);
     shape_msgs::SolidPrimitive shape;
     geometry_msgs::Pose obj_pose;
-    object_detection::FitBox(*object_cloud, coeff, *extract_out, shape, obj_pose);
-
+    object_detection::FitBox(*white_object_cloud, plane_coefficients, *extract_out, shape, obj_pose);
+//
     object_detection::Object obj;
     obj.cloud = object_cloud;
     obj.pose = obj_pose;
     obj.dimensions.x = shape.dimensions[0];
     obj.dimensions.y = shape.dimensions[1];
     obj.dimensions.z = shape.dimensions[2];
-    objects->push_back(obj);
-    **/
+    objects.push_back(obj);
+    //----------------------------------------------------------------------------------
 
+    //----------------------------------------------------------------------------------
+    // ASSIGN COLOR TO EACH CLUSTER
     for (int j =0; j<indexes->indices.size(); ++j){
       pcl::PointXYZRGB point ;
       point.x= white_cloud->points[indexes->indices[j]].x;
@@ -243,6 +251,7 @@ pcl::PCLPointCloud2::Ptr color_euclidean_clusters_and_get_3D_bounding_boxes(cons
       colored_masked_cluster->points.push_back( point );
     }
   }
+  //----------------------------------------------------------------------------------
 
   colored_masked_cluster->width = colored_masked_cluster->points.size();
   colored_masked_cluster->height = 1;
@@ -281,19 +290,21 @@ void visualize_bounding_boxes(const std::vector<object_detection::Object> &objec
     visualization_msgs::Marker object_marker;
     object_marker.ns = "objects";
     object_marker.id = i;
-    object_marker.header.frame_id = "base_link";
+    object_marker.header.frame_id = "camera_depth_optical_frame";
     object_marker.type = visualization_msgs::Marker::CUBE;
     object_marker.pose = object.pose;
     object_marker.scale = object.dimensions;
     object_marker.color.g = 1;
     object_marker.color.a = 0.3;
-    pb_object_marker.publish(object_marker);
+    pb_object_3D_bbox.publish(object_marker);
   }
 }
 
 
 pcl::PCLPointCloud2::Ptr filtered_cloud;
-pcl::PCLPointCloud2::Ptr segmented_objects_cloud;
+pcl::PCLPointCloud2::Ptr segmented_objects_cloud  (new pcl::PCLPointCloud2());
+pcl::ModelCoefficients::Ptr plane_coefficients (new pcl::ModelCoefficients);
+
 std::vector<pcl::PointIndices> cluster_indices;
 pcl::PCLPointCloud2::Ptr colored_masked_cluster;
 
@@ -306,18 +317,18 @@ void cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud)
   // std::cout << "point cloud frame id: " << cloud->header.frame_id << std::endl;
 
   filtered_cloud =  passthrough_filter_vertical( passthrough_filter_horizontal( statistical_outlier_removal( voxel_filter_downsampling( cloud ) ) ) );
-  segmented_objects_cloud = ransac_plane_segmentation( filtered_cloud );
+  ransac_plane_segmentation( filtered_cloud , segmented_objects_cloud, plane_coefficients);
   cluster_indices =  euclidean_clustering(segmented_objects_cloud);
 
   // colored_masked_cluster = cluster_masking(segmented_objects_cloud, cluster_indices);
   std::vector<object_detection::Object> objects;
-  colored_masked_cluster = color_euclidean_clusters_and_get_3D_bounding_boxes(segmented_objects_cloud, cluster_indices, objects);
+  colored_masked_cluster = color_euclidean_clusters_and_get_3D_bounding_boxes(segmented_objects_cloud, cluster_indices, plane_coefficients, objects);
 
   pb_filtered_cloud.publish ( filtered_cloud );
   pb_segmented_cloud.publish ( segmented_objects_cloud );
   pb_color_clustered.publish ( colored_masked_cluster );
 
-  // visualize_bounding_boxes(objects);
+  visualize_bounding_boxes(objects);
 }
 
 
@@ -329,6 +340,7 @@ int main(int argc, char** argv)
   pb_filtered_cloud = nh.advertise<pcl::PCLPointCloud2> ("/filtered_cloud", 1);
   pb_segmented_cloud = nh.advertise<pcl::PCLPointCloud2> ("/segmented_cloud", 1);
   pb_color_clustered = nh.advertise<pcl::PCLPointCloud2> ("/color_clustered_cloud", 1);
+  pb_object_3D_bbox =  nh.advertise<visualization_msgs::Marker>("/object_3D_bbox", 100);
 
   ros::Subscriber sub = nh.subscribe<pcl::PCLPointCloud2>("/camera/depth/color/points", 1, cloud_cb);
   ros::spin();
