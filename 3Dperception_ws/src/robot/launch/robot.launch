@@ -8,15 +8,7 @@
     <!--Include the robot model-->
     <include file="$(find robot)/launch/robot_model.launch"/>
 
-    <!--Include description and control launch files-->
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
-      <arg name="filters" value="pointcloud" />
-    </include>
-
-	<!--PR2 cloud_transformer node-->
-	<node name="camera_to_world_point_cloud" pkg="object_detection" type="camera_to_world_point_cloud"
-    respawn="false" output="screen">
-    <param name="demo" type="bool" value="true"/>
-  </node>
+    <!--Include the object detection launch files-->
+    <!-- <include file="$(find object_detection)/launch/object_detection.launch"/> -->
 
 </launch>
