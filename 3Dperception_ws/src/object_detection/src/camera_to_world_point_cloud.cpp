@@ -37,8 +37,8 @@ private:
 
   void pclCallback(const sensor_msgs::PointCloud2ConstPtr& pcl_msg)
   {
-    listener_.waitForTransform("base_footprint", "camera_depth_optical_frame", ros::Time::now(), ros::Duration(1.0));
-    pcl_ros::transformPointCloud("base_footprint", *pcl_msg, *buffer_, listener_);
+    listener_.waitForTransform("/base_footprint", "/camera_depth_optical_frame", ros::Time::now(), ros::Duration(1.0));
+    pcl_ros::transformPointCloud("/base_footprint", *pcl_msg, *buffer_, listener_);
     pcl_pub_.publish(buffer_);
   }
 };  // End of class CloudTransformer
