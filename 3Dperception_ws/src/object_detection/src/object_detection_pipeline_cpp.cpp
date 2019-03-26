@@ -41,61 +41,71 @@ ros::Publisher pb_segmented_cloud;
 ros::Publisher pb_color_clustered;
 ros::Publisher pb_object_3D_bbox;
 
+struct Color
+{
+   int r, g, b;
+};
+
+std::vector<Color>  color_list;
+
+void generate_color_list(){
+  for(int i=0; i<500; ++i){
+    color_list.push_back({ rand() % 255, rand() % 255, rand() % 255 });
+  }
+}
+
+uint32_t rgb_to_float(Color color){
+  uint8_t r = color.r, g = color.g, b = color.b;    // Example: Red color
+  uint32_t rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
+  return rgb;
+}
 //----------------------------------------------------------------------------------
 //Voxel Grid Downsampling filter
 //----------------------------------------------------------------------------------
-pcl::PCLPointCloud2::Ptr voxel_filter_downsampling(const pcl::PCLPointCloud2ConstPtr& cloud){
-  pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2());
+void voxel_filter_downsampling(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PCLPointCloud2::Ptr voxel_filter_downsampled_cloud){
   pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
   sor.setInputCloud (cloud);
   sor.setLeafSize (0.005f, 0.005f, 0.005f);
-  sor.filter (*cloud_filtered);
-  return cloud_filtered;
+  sor.filter (*voxel_filter_downsampled_cloud);
 }
 
 //----------------------------------------------------------------------------------
 // Statistical Outlier Removal
 //----------------------------------------------------------------------------------
 // StatisticalOutlierRemoval IS VERY SLOW (Maybe fast on GPU) //TODO
-pcl::PCLPointCloud2::Ptr statistical_outlier_removal(const pcl::PCLPointCloud2ConstPtr& cloud){
-  pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2());
+void statistical_outlier_removal(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PCLPointCloud2::Ptr statistical_outlier_removed_cloud){
   pcl::StatisticalOutlierRemoval<pcl::PCLPointCloud2> sor;
   sor.setInputCloud (cloud);
   sor.setMeanK (20);
   sor.setStddevMulThresh (2);
   // sor.setNegative (true);   // To view inliers
-  sor.filter (*cloud_filtered);
-  return cloud_filtered;
+  sor.filter (*statistical_outlier_removed_cloud);
 }
 
 
 //----------------------------------------------------------------------------------
 //PassThrough filter (Horizontal Axis)
 //----------------------------------------------------------------------------------
-pcl::PCLPointCloud2::Ptr passthrough_filter_horizontal(const pcl::PCLPointCloud2ConstPtr& cloud){
-  pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2());
+void passthrough_filter_horizontal(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PCLPointCloud2::Ptr passthrough_filter_horizontal_cloud){
   pcl::PassThrough<pcl::PCLPointCloud2> pass;
   pass.setInputCloud (cloud);
   pass.setFilterFieldName ("x");
   pass.setFilterLimits (-2.5, 2.5);  // 0.6095, 1.1  //left and right
   // pass.setFilterLimitsNegative (true);   // To view outliers
-  pass.filter (*cloud_filtered);
-  return cloud_filtered;
+  pass.filter (*passthrough_filter_horizontal_cloud);
 }
 
 
 //----------------------------------------------------------------------------------
 // PassThrough filter (Vertical Axis)
 //----------------------------------------------------------------------------------
-pcl::PCLPointCloud2::Ptr passthrough_filter_vertical(const pcl::PCLPointCloud2ConstPtr& cloud){
-  pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2());
+void passthrough_filter_vertical(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PCLPointCloud2::Ptr passthrough_filter_vertical_cloud){
   pcl::PassThrough<pcl::PCLPointCloud2> pass;
   pass.setInputCloud (cloud);
   pass.setFilterFieldName ("y");
   pass.setFilterLimits (-0.5, 5);  // -0.456, 0.456    //up (the less, the higher it can see ) and down (the more, the lower it can see)
   // pass.setFilterLimitsNegative (true);   // To view outliers
-  pass.filter (*cloud_filtered);
-  return cloud_filtered;
+  pass.filter (*passthrough_filter_vertical_cloud);
 }
 
 
@@ -107,11 +117,9 @@ void ransac_plane_segmentation(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PC
   pcl::PointCloud<pcl::PointXYZ>::Ptr white_cloud(new pcl::PointCloud<pcl::PointXYZ> );
   pcl::fromPCLPointCloud2(*cloud, *white_cloud);
 
-  // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
 
   pcl::PCLPointCloud2::Ptr extracted_plane (new pcl::PCLPointCloud2());
-  // pcl::PCLPointCloud2::Ptr extracted_objects (new pcl::PCLPointCloud2());
 
   // Create the segmentation object
   pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -144,24 +152,21 @@ void ransac_plane_segmentation(const pcl::PCLPointCloud2ConstPtr& cloud, pcl::PC
   extract.setNegative (true);
   // extract.filter (*extracted_objects);
   extract.filter (*segmented_objects_cloud);
-
-  // return extracted_objects;
 }
 
 
 //----------------------------------------------------------------------------------
 // Euclidean Clustering
 //----------------------------------------------------------------------------------
-std::vector<pcl::PointIndices> euclidean_clustering(const pcl::PCLPointCloud2ConstPtr& extracted_objects){
+void euclidean_clustering(const pcl::PCLPointCloud2ConstPtr& segmented_objects_cloud, std::vector<pcl::PointIndices> &cluster_indices){
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr white_cloud(new pcl::PointCloud<pcl::PointXYZ> );
-  pcl::fromPCLPointCloud2(*extracted_objects, *white_cloud);
+  pcl::fromPCLPointCloud2(*segmented_objects_cloud, *white_cloud);
 
   // Creating the KdTree object for the search method of the extraction
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
   tree->setInputCloud (white_cloud);
 
-  std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance (0.03); // 3cm
   ec.setMinClusterSize (100);  // Min number of popints to make a cluster
@@ -169,49 +174,30 @@ std::vector<pcl::PointIndices> euclidean_clustering(const pcl::PCLPointCloud2Con
   ec.setSearchMethod (tree);
   ec.setInputCloud (white_cloud);
   ec.extract (cluster_indices);
-
-  return cluster_indices;
-}
-
-
-struct Color
-{
-   int r, g, b;
-};
-
-uint32_t rgb_to_float(Color color){
-  uint8_t r = color.r, g = color.g, b = color.b;    // Example: Red color
-  uint32_t rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
-  return rgb;
 }
 
 //----------------------------------------------------------------------------------
 // Create Cluster-Mask Point Cloud to visualize each cluster separately
 //----------------------------------------------------------------------------------
-pcl::PCLPointCloud2::Ptr color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud2ConstPtr& segmented_objects_cloud,
-  const std::vector<pcl::PointIndices> &cluster_indices, const pcl::ModelCoefficients::Ptr plane_coefficients , std::vector<object_detection::Object> &objects){
+void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud2ConstPtr& segmented_objects_cloud,
+  const std::vector<pcl::PointIndices> &cluster_indices, const pcl::ModelCoefficients::Ptr plane_coefficients,
+   pcl::PCLPointCloud2::Ptr colored_masked_cluster_cloud_ros, std::vector<object_detection::Object> &objects){
 
   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_masked_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr white_cloud(new pcl::PointCloud<pcl::PointXYZ> );
   pcl::fromPCLPointCloud2(*segmented_objects_cloud, *white_cloud);
 
-  // Generate a random color list
-  std::vector<Color>  color_list;
-  for(int i=0; i<cluster_indices.size(); ++i){
-    color_list.push_back({ rand() % 255, rand() % 255, rand() % 255 });
-  }
-  std::cout << "Detected " << color_list.size () << " objects" << std::endl;
+  std::cout << "Detected " << cluster_indices.size() << " objects" << std::endl;
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_masked_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
 
   pcl::ExtractIndices<pcl::PCLPointCloud2> extract;
+
   extract.setInputCloud(segmented_objects_cloud);
 
    // // Fill in the cloud data
   for(int i=0; i<cluster_indices.size(); ++i){
-
-
     pcl::PointIndices::Ptr indexes(new pcl::PointIndices);
     *indexes = cluster_indices[i];
 
@@ -257,31 +243,9 @@ pcl::PCLPointCloud2::Ptr color_euclidean_clusters_and_get_3D_bounding_boxes(cons
   colored_masked_cluster->height = 1;
   colored_masked_cluster->is_dense = true;
 
-  pcl::PCLPointCloud2::Ptr colored_masked_cluster_ros (new pcl::PCLPointCloud2);
-  pcl::toPCLPointCloud2(*colored_masked_cluster, *colored_masked_cluster_ros);
-
-  colored_masked_cluster_ros->header.frame_id = "camera_depth_optical_frame";
-
-  return colored_masked_cluster_ros;
+  pcl::toPCLPointCloud2(*colored_masked_cluster, *colored_masked_cluster_cloud_ros);
+  colored_masked_cluster_cloud_ros->header.frame_id = "base_footprint";
 }
-
-
-// void GetAxisAlignedBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
-//                                geometry_msgs::Pose* pose,
-//                                geometry_msgs::Vector3* dimensions) {
-//   Eigen::Vector4f min_pt, max_pt;
-//   pcl::getMinMax3D(*cloud, min_pt, max_pt);
-//
-//   pose->position.x = (max_pt.x() + min_pt.x()) / 2;
-//   pose->position.y = (max_pt.y() + min_pt.y()) / 2;
-//   pose->position.z = (max_pt.z() + min_pt.z()) / 2;
-//   pose->orientation.w = 1;
-//
-//   dimensions->x = max_pt.x() - min_pt.x();
-//   dimensions->y = max_pt.y() - min_pt.y();
-//   dimensions->z = max_pt.z() - min_pt.z();
-// }
-
 
 void visualize_bounding_boxes(const std::vector<object_detection::Object> &objects){
   for (size_t i = 0; i < objects.size(); ++i) {
@@ -290,7 +254,7 @@ void visualize_bounding_boxes(const std::vector<object_detection::Object> &objec
     visualization_msgs::Marker object_marker;
     object_marker.ns = "objects";
     object_marker.id = i;
-    object_marker.header.frame_id = "camera_depth_optical_frame";
+    object_marker.header.frame_id = "base_footprint";
     object_marker.type = visualization_msgs::Marker::CUBE;
     object_marker.pose = object.pose;
     object_marker.scale = object.dimensions;
@@ -300,33 +264,43 @@ void visualize_bounding_boxes(const std::vector<object_detection::Object> &objec
   }
 }
 
+pcl::PCLPointCloud2::Ptr voxel_filter_downsampled_cloud (new pcl::PCLPointCloud2);
+pcl::PCLPointCloud2::Ptr statistical_outlier_removed_cloud (new pcl::PCLPointCloud2);
+pcl::PCLPointCloud2::Ptr passthrough_filter_horizontal_cloud (new pcl::PCLPointCloud2);
+pcl::PCLPointCloud2::Ptr passthrough_filter_vertical_cloud (new pcl::PCLPointCloud2);
+pcl::PCLPointCloud2::Ptr filtered_cloud (new pcl::PCLPointCloud2);
 
-pcl::PCLPointCloud2::Ptr filtered_cloud;
-pcl::PCLPointCloud2::Ptr segmented_objects_cloud  (new pcl::PCLPointCloud2());
+pcl::PCLPointCloud2::Ptr segmented_objects_cloud  (new pcl::PCLPointCloud2) ;
 pcl::ModelCoefficients::Ptr plane_coefficients (new pcl::ModelCoefficients);
 
 std::vector<pcl::PointIndices> cluster_indices;
-pcl::PCLPointCloud2::Ptr colored_masked_cluster;
+pcl::PCLPointCloud2::Ptr colored_masked_cluster_cloud_ros (new pcl::PCLPointCloud2);
 
-void cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud)
+std::vector<object_detection::Object> objects;
+
+void cloud_cb (const pcl::PCLPointCloud2ConstPtr& input_cloud)
 {
-  if (!(*cloud).is_dense){ // if true, then there are no NaNs, No need to convert to pcl::PointCloud<pcl::PointXYZRGB>
+  if (!(*input_cloud).is_dense){ // if true, then there are no NaNs, No need to convert to pcl::PointCloud<pcl::PointXYZRGB>
     ROS_INFO("Cloud not dense, process for NaNs");
   }
 
   // std::cout << "point cloud frame id: " << cloud->header.frame_id << std::endl;
+  cluster_indices.clear();
+  objects.clear();
 
-  filtered_cloud =  passthrough_filter_vertical( passthrough_filter_horizontal( statistical_outlier_removal( voxel_filter_downsampling( cloud ) ) ) );
+  voxel_filter_downsampling( input_cloud , voxel_filter_downsampled_cloud);
+  statistical_outlier_removal( voxel_filter_downsampled_cloud , statistical_outlier_removed_cloud);
+  passthrough_filter_horizontal( statistical_outlier_removed_cloud , passthrough_filter_horizontal_cloud);
+  passthrough_filter_vertical( passthrough_filter_horizontal_cloud , passthrough_filter_vertical_cloud);
+  filtered_cloud = passthrough_filter_vertical_cloud;
+
   ransac_plane_segmentation( filtered_cloud , segmented_objects_cloud, plane_coefficients);
-  cluster_indices =  euclidean_clustering(segmented_objects_cloud);
-
-  // colored_masked_cluster = cluster_masking(segmented_objects_cloud, cluster_indices);
-  std::vector<object_detection::Object> objects;
-  colored_masked_cluster = color_euclidean_clusters_and_get_3D_bounding_boxes(segmented_objects_cloud, cluster_indices, plane_coefficients, objects);
+  euclidean_clustering(segmented_objects_cloud, cluster_indices);
+  color_euclidean_clusters_and_get_3D_bounding_boxes(segmented_objects_cloud, cluster_indices, plane_coefficients, colored_masked_cluster_cloud_ros, objects);
 
   pb_filtered_cloud.publish ( filtered_cloud );
   pb_segmented_cloud.publish ( segmented_objects_cloud );
-  pb_color_clustered.publish ( colored_masked_cluster );
+  pb_color_clustered.publish ( colored_masked_cluster_cloud_ros );
 
   visualize_bounding_boxes(objects);
 }
@@ -337,10 +311,12 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "object_detection_node_cpp");
   ros::NodeHandle nh;
 
+  generate_color_list();
+
   pb_filtered_cloud = nh.advertise<pcl::PCLPointCloud2> ("/filtered_cloud", 1);
   pb_segmented_cloud = nh.advertise<pcl::PCLPointCloud2> ("/segmented_cloud", 1);
   pb_color_clustered = nh.advertise<pcl::PCLPointCloud2> ("/color_clustered_cloud", 1);
-  pb_object_3D_bbox =  nh.advertise<visualization_msgs::Marker>("/object_3D_bbox", 100);
+  pb_object_3D_bbox =  nh.advertise<visualization_msgs::Marker>("/object_3D_bbox", 1);
 
   ros::Subscriber sub = nh.subscribe<pcl::PCLPointCloud2>("/base_footprint/points", 1, cloud_cb);
   ros::spin();

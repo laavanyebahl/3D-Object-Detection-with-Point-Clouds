@@ -7,6 +7,7 @@ Panels:
         - /RobotModel1/Links1
         - /TF1/Frames1
         - /PointCloud21
+        - /Marker1
       Splitter Ratio: 0.602941155
     Tree Height: 747
   - Class: rviz/Selection
@@ -300,10 +301,18 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.00999999978
       Style: Flat Squares
-      Topic: /base_footprint/points
+      Topic: /color_clustered_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /object_3D_bbox
+      Name: Marker
+      Namespaces:
+        objects: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -345,10 +354,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.0297963209
+      Pitch: 0.604795933
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 1.38044393
+      Yaw: 3.61045265
     Saved: ~
 Window Geometry:
   Displays:
