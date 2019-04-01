@@ -299,10 +299,10 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 2
       Size (m): 0.00999999978
       Style: Points
-      Topic: /filtered_cloud
+      Topic: /segmented_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -313,7 +313,7 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         objects: true
-      Queue Size: 1
+      Queue Size: 10
       Value: true
   Enabled: true
   Global Options:
@@ -340,25 +340,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 3.84418964
+      Distance: 1.58916235
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.833184302
-        Y: 0.0510905981
+        X: 0.59981519
+        Y: -0.999180675
         Z: -3.4328653e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.16020292
+      Pitch: 0.130202621
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 3.22371173
+      Yaw: 4.72371435
     Saved: ~
 Window Geometry:
   Displays:
