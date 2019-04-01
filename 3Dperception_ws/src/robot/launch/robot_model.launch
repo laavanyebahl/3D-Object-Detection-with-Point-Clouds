@@ -16,6 +16,8 @@
   <arg name="gui" default="True" />
   <param name="use_gui" value="$(arg gui)"/>
 
-  <node name="rviz_robot" pkg="rviz" type="rviz" args="-d $(find robot)/rviz/robot_model.rviz" if="$(eval visualize == 'true')"/>
-
+  <group if="$(arg visualize)">
+    <node name="rviz_robot" pkg="rviz" type="rviz" args="-d $(find robot)/rviz/robot_model.rviz"/>
+  </group>
+  
 </launch>
