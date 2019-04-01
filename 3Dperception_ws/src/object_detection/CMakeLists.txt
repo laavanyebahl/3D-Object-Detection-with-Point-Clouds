@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roslint
   sensor_msgs
+	dynamic_reconfigure
 )
 
 set(CMAKE_CUDA_COMPILER  /usr/local/cuda-9.0/bin/nvcc)
@@ -117,9 +118,7 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-#		config/Pcl.cf
+   cfg/pcl_parameters.cfg
 )
 
 ###################################
@@ -138,8 +137,9 @@ catkin_package(
 		object_detection_3D_box_fitter
 #  CATKIN_DEPENDS sensor_msgs
 #  DEPENDS system_lib
-	CATKIN_DEPENDS message_runtime
+	CATKIN_DEPENDS geometry_msgs std_msgs sensor_msgs message_runtime
 )
+
 
 ###########
 ## Build ##
@@ -148,6 +148,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+include_directories(${object_detection}/cmake/cfgbuild.cmake)
 
 ## Declare libraries
 add_library(object_detection_3D_box_fitter src/3D_box_fitter.cpp)
@@ -161,11 +162,17 @@ target_link_libraries(object_detection_3D_box_fitter
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(camera_to_world_point_cloud src/camera_to_world_point_cloud.cpp)
+add_dependencies(camera_to_world_point_cloud ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(object_detection_pipeline_cpp src/object_detection_pipeline_cpp.cpp)
+add_dependencies(object_detection_pipeline_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(object_detection_pipeline_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(object_detection_pipeline_cpp ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -174,7 +181,6 @@ add_executable(object_detection_pipeline_cpp src/object_detection_pipeline_cpp.c
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
-add_dependencies(camera_to_world_point_cloud ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 
