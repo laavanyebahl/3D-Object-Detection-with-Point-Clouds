@@ -18,6 +18,9 @@
   <node pkg="object_detection" name="object_detection_pipeline" type="object_detection_pipeline_cpp" output="screen">
   </node>
 
+  <node name="rqt_reconfigure_pcl_parameters" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
+
   <node name="rviz_object_detection" pkg="rviz" type="rviz" args="-d $(find object_detection)/rviz/object_detection.rviz" required="true" />
+
 
 </launch>

@@ -4,10 +4,13 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
+        - /Axes1
         - /RobotModel1/Links1
+        - /TF1
         - /TF1/Frames1
         - /PointCloud21
-        - /Marker1
+        - /MarkerArray1
       Splitter Ratio: 0.602941155
     Tree Height: 747
   - Class: rviz/Selection
@@ -29,6 +32,8 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: PointCloud2
+Toolbars:
+  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
@@ -55,7 +60,7 @@ Visualization Manager:
       Length: 0.5
       Name: Axes
       Radius: 0.00999999978
-      Reference Frame: <Fixed Frame>
+      Reference Frame: front_base_footprint
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -163,6 +168,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        front_base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         wheel_left_link:
           Alpha: 1
           Show Axes: false
@@ -185,10 +194,8 @@ Visualization Manager:
       Frames:
         All Enabled: false
         base_footprint:
-          Value: true
-        base_link:
           Value: false
-        camera_accel_optical_frame:
+        base_link:
           Value: false
         camera_color_frame:
           Value: false
@@ -197,19 +204,15 @@ Visualization Manager:
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: false
-        camera_imu_frame:
           Value: false
         camera_infra1_frame:
-          Value: false
+          Value: true
         camera_infra1_optical_frame:
-          Value: false
+          Value: true
         camera_infra2_frame:
-          Value: false
+          Value: true
         camera_infra2_optical_frame:
-          Value: false
+          Value: true
         camera_left_ir_frame:
           Value: false
         camera_left_ir_optical_frame:
@@ -228,6 +231,8 @@ Visualization Manager:
           Value: false
         caster_back_right_link:
           Value: false
+        front_base_footprint:
+          Value: true
         wheel_left_link:
           Value: false
         wheel_right_link:
@@ -240,32 +245,6 @@ Visualization Manager:
       Tree:
         base_footprint:
           base_link:
-            camera_shaft_link:
-              camera_mount_link:
-                camera_link:
-                  camera_color_frame:
-                    camera_color_optical_frame:
-                      {}
-                  camera_depth_frame:
-                    camera_depth_optical_frame:
-                      {}
-                    camera_left_ir_frame:
-                      camera_left_ir_optical_frame:
-                        {}
-                    camera_right_ir_frame:
-                      camera_right_ir_optical_frame:
-                        {}
-                  camera_imu_frame:
-                    camera_accel_optical_frame:
-                      {}
-                    camera_gyro_optical_frame:
-                      {}
-                  camera_infra1_frame:
-                    camera_infra1_optical_frame:
-                      {}
-                  camera_infra2_frame:
-                    camera_infra2_optical_frame:
-                      {}
             caster_back_left_link:
               {}
             caster_back_right_link:
@@ -274,6 +253,28 @@ Visualization Manager:
               {}
             wheel_right_link:
               {}
+          front_base_footprint:
+            camera_shaft_link:
+              camera_mount_link:
+                camera_link:
+                  camera_depth_frame:
+                    camera_color_frame:
+                      camera_color_optical_frame:
+                        {}
+                    camera_depth_optical_frame:
+                      {}
+                    camera_left_ir_frame:
+                      camera_left_ir_optical_frame:
+                        {}
+                    camera_right_ir_frame:
+                      camera_right_ir_optical_frame:
+                        {}
+                  camera_infra1_frame:
+                    camera_infra1_optical_frame:
+                      {}
+                  camera_infra2_frame:
+                    camera_infra2_optical_frame:
+                      {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -300,25 +301,25 @@ Visualization Manager:
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.00999999978
-      Style: Flat Squares
-      Topic: /color_clustered_cloud
+      Style: Points
+      Topic: /filtered_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /object_3D_bbox
-      Name: Marker
+      Marker Topic: /objects_3D_bbox
+      Name: MarkerArray
       Namespaces:
         objects: true
-      Queue Size: 100
+      Queue Size: 1
       Value: true
   Enabled: true
   Global Options:
     Background Color: 108; 108; 108
     Default Light: true
-    Fixed Frame: base_footprint
+    Fixed Frame: front_base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -339,25 +340,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.79725707
+      Distance: 3.84418964
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0201000422
-        Y: -0.467065692
-        Z: -4.76837158e-07
+        X: 0.833184302
+        Y: 0.0510905981
+        Z: -3.4328653e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.604795933
+      Pitch: 0.16020292
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 3.61045265
+      Yaw: 3.22371173
     Saved: ~
 Window Geometry:
   Displays:
