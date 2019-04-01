@@ -10,9 +10,9 @@
 
 namespace object_detection {
 struct Object {
-  std::string name;
-  double confidence;
-  pcl::PCLPointCloud2::Ptr cloud;
+  std::string label;
+  float confidence;
+  pcl::PCLPointCloud2::Ptr object_cloud;
   geometry_msgs::Pose pose;
   geometry_msgs::Vector3 dimensions;
 };
