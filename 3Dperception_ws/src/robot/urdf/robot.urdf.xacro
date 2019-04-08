@@ -7,6 +7,7 @@
   <!--Links-->
   <!-- <link name="world"/> -->
   <link name="base_footprint"/>
+  <link name="front_base_footprint"/>
 
   <!-- Joints -->
   <!-- <joint name="world_joint" type="fixed">
@@ -19,6 +20,12 @@
     <parent link="base_footprint"/>
     <child link="base_link" />
     <origin xyz="0 0 0.010" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="front_base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="front_base_footprint" />
+    <origin xyz="-0.19 0 0" rpy="0 0 -3.147"/>
   </joint>
 
   <link name="base_link">
@@ -196,24 +203,26 @@
   </link> -->
 
 
+
   <joint name="base_to_camera_shaft_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.092" rpy="0 0 0"/>
-    <parent link="base_link"/>
+    <origin xyz="-0.115 0.0 0.126" rpy="0 0 0"/>
+    <parent link="front_base_footprint"/>
     <child link="camera_shaft_link"/>
   </joint>
 
   <link name="camera_shaft_link">
     <visual>
-      <origin xyz="0 0 0.092" rpy="0 0 0" />
+      <origin xyz="0 0 0.126" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.02 0.2"/>
+        <box size="0.02 0.02 0.30"/>
       </geometry>
       <material name="white"/>
     </visual>
   </link>
 
   <joint name="camera_shaft_to_camera_joint" type="fixed">
-    <origin xyz="0.02 0.0 0.17" rpy="0 0.4 0"/>
+    <origin xyz="0.02 0.0 0.24" rpy="0 0.35 0"/>
+    <!-- <origin xyz="0.02 0.0 0.42" rpy="0 0.6 0"/> -->
     <parent link="camera_shaft_link"/>
     <child link="camera_mount_link"/>
   </joint>
