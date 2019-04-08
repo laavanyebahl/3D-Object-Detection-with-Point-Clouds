@@ -281,6 +281,11 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
     obj.dimensions.x = shape.dimensions[0];
     obj.dimensions.y = shape.dimensions[1];
     obj.dimensions.z = shape.dimensions[2];
+
+    // REMOVE CLUSTERS with bounding box height greater than 0.1
+    if (shape.dimensions[2]>0.1) break;
+    if (obj_pose.positionz>0.05) break;
+
     objects.push_back(obj);
     //----------------------------------------------------------------------------------
 
