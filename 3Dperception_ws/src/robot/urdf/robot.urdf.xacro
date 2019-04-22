@@ -221,7 +221,7 @@
   </link>
 
   <joint name="camera_shaft_to_camera_joint" type="fixed">
-    <origin xyz="0.02 0.0 0.24" rpy="0 0.35 0"/>
+    <origin xyz="0.02 0.0 0.27" rpy="0 0.315 0"/>
     <!-- <origin xyz="0.02 0.0 0.42" rpy="0 0.6 0"/> -->
     <parent link="camera_shaft_link"/>
     <child link="camera_mount_link"/>
