@@ -9,6 +9,7 @@ Panels:
         - /RobotModel1/Links1
         - /TF1
         - /TF1/Frames1
+        - /Marker1
       Splitter Ratio: 0.602941155
     Tree Height: 747
   - Class: rviz/Selection
@@ -30,6 +31,8 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: ""
+Toolbars:
+  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
@@ -189,10 +192,14 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        ar_marker_7:
+          Value: true
         base_footprint:
           Value: true
         base_link:
           Value: false
+        camera_accel_optical_frame:
+          Value: true
         camera_color_frame:
           Value: false
         camera_color_optical_frame:
@@ -201,6 +208,18 @@ Visualization Manager:
           Value: false
         camera_depth_optical_frame:
           Value: false
+        camera_gyro_optical_frame:
+          Value: true
+        camera_imu_frame:
+          Value: true
+        camera_infra1_frame:
+          Value: true
+        camera_infra1_optical_frame:
+          Value: true
+        camera_infra2_frame:
+          Value: true
+        camera_infra2_optical_frame:
+          Value: true
         camera_left_ir_frame:
           Value: false
         camera_left_ir_optical_frame:
@@ -248,7 +267,8 @@ Visualization Manager:
                   camera_depth_frame:
                     camera_color_frame:
                       camera_color_optical_frame:
-                        {}
+                        ar_marker_7:
+                          {}
                     camera_depth_optical_frame:
                       {}
                     camera_left_ir_frame:
@@ -257,7 +277,26 @@ Visualization Manager:
                     camera_right_ir_frame:
                       camera_right_ir_optical_frame:
                         {}
+                  camera_imu_frame:
+                    camera_accel_optical_frame:
+                      {}
+                    camera_gyro_optical_frame:
+                      {}
+                  camera_infra1_frame:
+                    camera_infra1_optical_frame:
+                      {}
+                  camera_infra2_frame:
+                    camera_infra2_optical_frame:
+                      {}
       Update Interval: 0
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization_marker
+      Name: Marker
+      Namespaces:
+        basic_shapes: true
+      Queue Size: 1
       Value: true
   Enabled: true
   Global Options:
@@ -284,25 +323,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 0.637566864
+      Distance: 1.17413437
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0201000422
-        Y: -0.467065692
+        X: 0.15957047
+        Y: -0.170711666
         Z: -4.76837158e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.0553976521
+      Pitch: 0.935397387
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 4.50045967
+      Yaw: 3.33229709
     Saved: ~
 Window Geometry:
   Displays:

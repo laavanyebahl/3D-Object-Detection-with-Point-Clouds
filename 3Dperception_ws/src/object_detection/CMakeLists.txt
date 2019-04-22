@@ -25,7 +25,10 @@ set(CMAKE_CUDA_COMPILER  /usr/local/cuda-9.0/bin/nvcc)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
+
 find_package(PCL REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 
@@ -40,7 +43,6 @@ INCLUDE(FindCUDA)
 
 link_directories(
   ${catkin_LIBRARY_DIRS}
-  ${PCL_LIBRARY_DIRS}
 )
 
 
@@ -154,8 +156,7 @@ include_directories(${object_detection}/cmake/cfgbuild.cmake)
 add_library(object_detection_3D_box_fitter src/3D_box_fitter.cpp)
 add_dependencies(object_detection_3D_box_fitter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(object_detection_3D_box_fitter
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES})
+  ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -173,6 +174,7 @@ add_executable(object_detection_pipeline_cpp src/object_detection_pipeline_cpp.c
 add_dependencies(object_detection_pipeline_cpp ${PROJECT_NAME}_gencfg)
 add_dependencies(object_detection_pipeline_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(object_detection_pipeline_cpp ${catkin_LIBRARIES})
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -16,6 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   urdf
   xacro
+  geometry_msgs
+  tf2_geometry_msgs
+  tf2_ros
+  tf2
 )
 
 ################################################################################
@@ -43,6 +47,11 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+
+
+add_executable(detect_alvar_tag_cpp src/detect_alvar_tag_cpp.cpp)
+add_dependencies(detect_alvar_tag_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(detect_alvar_tag_cpp ${catkin_LIBRARIES})
 
 
 ################################################################################

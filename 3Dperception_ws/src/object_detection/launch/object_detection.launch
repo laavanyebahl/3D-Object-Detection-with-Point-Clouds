@@ -6,9 +6,11 @@
   </include>
 
   <!--Include description and control launch files-->
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+  <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="filters" value="pointcloud" />
-  </include>
+  </include> -->
+
+  <node pkg="rosbag" type="play" name="player"  args="--clock -u 44.9 -l $(find object_detection)/BAGS/box_cubi.bag"/>
 
 	<!--camera_to_world_point_cloud  node-->
 	<node name="camera_to_world_point_cloud" pkg="object_detection" type="camera_to_world_point_cloud"
@@ -18,9 +20,13 @@
   <node pkg="object_detection" name="object_detection_pipeline" type="object_detection_pipeline_cpp" output="screen">
   </node>
 
+  <include file="$(find robot)/launch/alvarTag.launch"/>
+
+  <node pkg="robot" name="detect_alvar_tag_cpp" type="detect_alvar_tag_cpp" output="screen">
+  </node>
+
   <node name="rqt_reconfigure_pcl_parameters" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
 
   <node name="rviz_object_detection" pkg="rviz" type="rviz" args="-d $(find object_detection)/rviz/object_detection.rviz" required="true" />
-
 
 </launch>
