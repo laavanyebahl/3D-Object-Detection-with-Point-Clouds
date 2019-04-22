@@ -6,11 +6,11 @@
   </include>
 
   <!--Include description and control launch files-->
-  <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="filters" value="pointcloud" />
-  </include> -->
+  </include>
 
-  <node pkg="rosbag" type="play" name="player"  args="--clock -u 44.9 -l $(find object_detection)/BAGS/box_cubi.bag"/>
+  <!-- <node pkg="rosbag" type="play" name="player"  args="-clock -u 44.9 -l $(find object_detection)/BAGS/box_cubi.bag"/> -->
 
 	<!--camera_to_world_point_cloud  node-->
 	<node name="camera_to_world_point_cloud" pkg="object_detection" type="camera_to_world_point_cloud"
