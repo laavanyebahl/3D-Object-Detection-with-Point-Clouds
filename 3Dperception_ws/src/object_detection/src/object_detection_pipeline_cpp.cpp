@@ -55,7 +55,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 
-
+#include <cmath>
 /** IMPORTANT:    // https://stackoverflow.com/questions/36380217/pclpclpointcloud2-usage
 pcl::PCLPointCloud2 is a ROS message type replacing the old sensors_msgs::PointCloud2. Hence, it should only be used when interacting with ROS. (see an example here)
 If needed, PCL provides two functions to convert from one type to the other:
@@ -88,13 +88,13 @@ float voxel_filter_downsampling_leaf = 0.004f;
 float beforeSeg_statistical_outlier_removal_K = 20;
 float beforeSeg_statistical_outlier_removal_deviation = 0.01;
 float afterSeg_statistical_outlier_removal_K = 20;
-float afterSeg_statistical_outlier_removal_deviation = 0.01;
+float afterSeg_statistical_outlier_removal_deviation = 0.2;
 float ransac_plane_segmentation_deviation = 0.008;
 float ransac_plane_segmentation_iterations = 100;
 
 float euclidean_clustering_tolerance = 0.015;
 float euclidean_clustering_max   = 200;
-float euclidean_clustering_min   = 850;
+float euclidean_clustering_min   = 800;
 
 bool enable_passthrough_filter_x = true;
 bool enable_passthrough_filter_y = true;
@@ -289,8 +289,8 @@ void shrink_cloud(const pcl::PCLPointCloud2ConstPtr& segmented_cloud, const pcl:
 
   for (size_t i = 0; i < hull_cloud->points.size (); ++i){
       pcl::PointXYZRGB point ;
-      point.x= 0.95*(hull_cloud->points[i].x - centroid[0]) + centroid[0];
-      point.y= 0.85*(hull_cloud->points[i].y - centroid[1]) + centroid[1];
+      point.x= 0.9*(hull_cloud->points[i].x - centroid[0]) + centroid[0];
+      point.y= 0.9*(hull_cloud->points[i].y - centroid[1]) + centroid[1];
       point.z= 1*(hull_cloud->points[i].z - centroid[2]) + centroid[2];
       point.rgb= 255;
       shrunk_hull_cloud->points.push_back( point );
@@ -430,6 +430,7 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
 
       // REMOVE CLUSTERS if centroid is greater than 5 cm
       if (detected_object.pose.pose.position.z>0.05) break;
+      if (detected_object.pose.pose.position.x>1.4) break;
 
       objects.push_back(detected_object);
       publish_and_visualize_bounding_boxes(objects);
