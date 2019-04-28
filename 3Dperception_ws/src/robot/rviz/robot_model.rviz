@@ -265,10 +265,6 @@ Visualization Manager:
               camera_mount_link:
                 camera_link:
                   camera_depth_frame:
-                    camera_color_frame:
-                      camera_color_optical_frame:
-                        ar_marker_7:
-                          {}
                     camera_depth_optical_frame:
                       {}
                     camera_left_ir_frame:
@@ -338,10 +334,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.935397387
+      Pitch: -0.214602441
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 3.33229709
+      Yaw: 4.46229982
     Saved: ~
 Window Geometry:
   Displays:

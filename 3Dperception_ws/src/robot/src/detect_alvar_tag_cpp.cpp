@@ -5,9 +5,12 @@
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <geometry_msgs/Pose.h>
 
 tf2_ros::Buffer* tf_buffer;
 tf2_ros::TransformListener* tf_listener;
+
+ros::Publisher pub;
 
 
 void cb(ar_track_alvar_msgs::AlvarMarkers req) {
@@ -33,12 +36,28 @@ void cb(ar_track_alvar_msgs::AlvarMarkers req) {
 
       std::cout<<"Pose fom Robot= "<<transformStamped.transform<<std::endl;
 
+      //convert transformStamped to Pose and publish to 'target_pose'
+      geometry_msgs::Pose pose;
+
+      pose.position.x = transformStamped.transform.translation.x;
+      pose.position.y = transformStamped.transform.translation.y;
+      pose.position.z = transformStamped.transform.translation.z;
+      pose.orientation.x = transformStamped.transform.rotation.x;
+      pose.orientation.y = transformStamped.transform.rotation.y;
+      pose.orientation.z = transformStamped.transform.rotation.z;
+      pose.orientation.w = transformStamped.transform.rotation.w;
+
+
+      pub.publish(pose);
+
     }
 }
 
 int main(int argc, char **argv) {
+
   ros::init(argc, argv, "arlistener");
   ros::NodeHandle nh;
+  pub = nh.advertise<geometry_msgs::Pose>("target_pose", 1000);
 
   tf_buffer = new tf2_ros::Buffer();
   tf_listener = new tf2_ros::TransformListener(*tf_buffer);

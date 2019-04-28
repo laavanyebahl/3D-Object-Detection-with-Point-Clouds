@@ -82,7 +82,7 @@ float passthrough_filter_x_low = 0;
 float passthrough_filter_x_high  = 1.6;
 float passthrough_filter_y_low = -1;
 float passthrough_filter_y_high =  1;
-float passthrough_filter_z_low = 0;
+float passthrough_filter_z_low = -1;
 float passthrough_filter_z_high = 0.25;
 float voxel_filter_downsampling_leaf = 0.004f;
 float beforeSeg_statistical_outlier_removal_K = 20;
@@ -94,7 +94,7 @@ float ransac_plane_segmentation_iterations = 100;
 
 float euclidean_clustering_tolerance = 0.015;
 float euclidean_clustering_max   = 200;
-float euclidean_clustering_min   = 800;
+float euclidean_clustering_min   = 950;
 
 bool enable_passthrough_filter_x = true;
 bool enable_passthrough_filter_y = true;
@@ -428,9 +428,11 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
       detected_object.dimensions.y = shape.dimensions[1];
       detected_object.dimensions.z = shape.dimensions[2];
 
-      // REMOVE CLUSTERS if centroid is greater than 5 cm
-      if (detected_object.pose.pose.position.z>0.05) break;
-      if (detected_object.pose.pose.position.x>1.4) break;
+      // REMOVE CLUSTERS
+      if (detected_object.dimensions.z >0.15) break;
+      if (detected_object.dimensions.z <0.01) break;
+      if (detected_object.pose.pose.position.z>0.07) break;
+      if (detected_object.pose.pose.position.x>1.35) break;
 
       objects.push_back(detected_object);
       publish_and_visualize_bounding_boxes(objects);
