@@ -65,6 +65,9 @@ void toPCLPointCloud2 (const pcl::PointCloud<PointT>& cloud, pcl::PCLPointCloud2
 
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudType;
 
+#include <object_tracking/object_tracker.hpp>
+using namespace object_tracking;
+
 // Publishers
 ros::Publisher pb_filtered_cloud;
 ros::Publisher pb_beforeSeg_statistical_outlier;
@@ -88,13 +91,13 @@ float voxel_filter_downsampling_leaf = 0.004f;
 float beforeSeg_statistical_outlier_removal_K = 20;
 float beforeSeg_statistical_outlier_removal_deviation = 0.01;
 float afterSeg_statistical_outlier_removal_K = 20;
-float afterSeg_statistical_outlier_removal_deviation = 0.2;
+float afterSeg_statistical_outlier_removal_deviation = 0.25;
 float ransac_plane_segmentation_deviation = 0.008;
 float ransac_plane_segmentation_iterations = 100;
 
 float euclidean_clustering_tolerance = 0.015;
-float euclidean_clustering_max   = 200;
-float euclidean_clustering_min   = 950;
+float euclidean_clustering_max   = 125;
+float euclidean_clustering_min   = 800;
 
 bool enable_passthrough_filter_x = true;
 bool enable_passthrough_filter_y = true;
@@ -106,6 +109,8 @@ bool enable_shrinking = true;
 bool enable_afterSeg_statistical_outlier_removal = true;
 bool enable_euclidean_clustering = true;
 bool enable_3D_bounding_boxes = true;
+
+std::unique_ptr<objectTracker> tracker;
 
 
 struct Color
@@ -289,8 +294,8 @@ void shrink_cloud(const pcl::PCLPointCloud2ConstPtr& segmented_cloud, const pcl:
 
   for (size_t i = 0; i < hull_cloud->points.size (); ++i){
       pcl::PointXYZRGB point ;
-      point.x= 0.9*(hull_cloud->points[i].x - centroid[0]) + centroid[0];
-      point.y= 0.9*(hull_cloud->points[i].y - centroid[1]) + centroid[1];
+      point.x= 0.88*(hull_cloud->points[i].x - centroid[0]) + centroid[0];
+      point.y= 0.88*(hull_cloud->points[i].y - centroid[1]) + centroid[1];
       point.z= 1*(hull_cloud->points[i].z - centroid[2]) + centroid[2];
       point.rgb= 255;
       shrunk_hull_cloud->points.push_back( point );
@@ -397,21 +402,61 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
   extract.setInputCloud(segmented_objects_cloud);
 
   std::vector<object_detection::DetectedObject> objects;
+
+
+  std::vector<Cluster> clusters;
+
+
    // // Fill in the cloud data
   for(int i=0; i<cluster_indices.size(); ++i){
     pcl::PointIndices::Ptr indexes(new pcl::PointIndices);
     *indexes = cluster_indices[i];
     std::cout << "\rObject " << (i+1)<< " : " <<indexes->indices.size() << " points" << std::endl;
 
+    extract.setIndices(indexes);
+    pcl::PCLPointCloud2::Ptr object_cloud (new pcl::PCLPointCloud2);
+    extract.filter(*object_cloud);
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr white_object_cloud(new pcl::PointCloud<pcl::PointXYZRGB> );
+    pcl::fromPCLPointCloud2(*object_cloud, *white_object_cloud);
+
+    Cluster::Ptr cluster(new Cluster(white_object_cloud));
+    float dist = cluster->centroid.matrix().head<2>().norm();
+    // if ( dist > 1.3) {
+    //   continue;
+    // }
+    clusters.push_back(*cluster);
+  }
+
+  struct less_than_key
+  {
+      inline bool operator() (const Cluster& struct1, const Cluster& struct2)
+      {
+          float dist1 = struct1.centroid.matrix().head<2>().norm();
+          float dist2 = struct2.centroid.matrix().head<2>().norm();
+          return (dist1 < dist2);
+      }
+  };
+
+  // Sort according to distance
+  std::sort(clusters.begin(), clusters.end(), less_than_key());
+
+  // update object tracker
+  ros::Time time= ros::Time::now();
+  tracker->predict(time);
+  tracker->correct(time, clusters);
+
+  for(int i=0; i<tracker->object.size(); i++) {
+    const auto& track = tracker->object[i];
+    const Cluster* associated = boost::any_cast<Cluster>(&track->lastAssociated());
+    if(!associated) {
+      continue;
+    }
+
     // BOUNDING BOX DETECTION
     if (enable_3D_bounding_boxes){
 
-      extract.setIndices(indexes);
-      pcl::PCLPointCloud2::Ptr object_cloud (new pcl::PCLPointCloud2);
-      extract.filter(*object_cloud);
-
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr white_object_cloud(new pcl::PointCloud<pcl::PointXYZRGB> );
-      pcl::fromPCLPointCloud2(*object_cloud, *white_object_cloud);
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr white_object_cloud = associated->cloud;
 
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_out (new pcl::PointCloud<pcl::PointXYZRGB>);
       shape_msgs::SolidPrimitive shape;
@@ -419,7 +464,7 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
       object_detection::FitBox(*white_object_cloud, plane_coefficients, *extract_out, shape, obj_pose);
 
       object_detection::DetectedObject detected_object;
-      detected_object.id = i;
+      detected_object.id = track->id();
       // detected_object.confidence = 0.0;
       // detected_object.object_cloud = object_cloud;
       detected_object.pose.pose.position = obj_pose.position;
@@ -430,14 +475,32 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
 
       // REMOVE CLUSTERS
       if (detected_object.dimensions.z >0.15) break;
-      if (detected_object.dimensions.z <0.01) break;
-      if (detected_object.pose.pose.position.z>0.07) break;
-      if (detected_object.pose.pose.position.x>1.35) break;
+      if (detected_object.dimensions.z <0.012) break;
+      if (detected_object.dimensions.z *detected_object.dimensions.y* detected_object.dimensions.z <0.00001) break;
+      if (detected_object.pose.pose.position.z>0.09) break;
+      float dist = sqrt( pow(detected_object.pose.pose.position.x,2) + pow(detected_object.pose.pose.position.y,2) + pow(detected_object.pose.pose.position.z,2) );
+      if (dist>1.3) break;
 
       objects.push_back(detected_object);
       publish_and_visualize_bounding_boxes(objects);
     }
+    // // ASSIGN COLOR TO EACH CLUSTER
+    // for (int j =0; j<indexes->indices.size(); ++j){
+    //   pcl::PointXYZRGB point ;
+    //   point.x= white_cloud->points[indexes->indices[j]].x;
+    //   point.y= white_cloud->points[indexes->indices[j]].y;
+    //   point.z= white_cloud->points[indexes->indices[j]].z;
+    //   uint32_t rgb = rgb_to_float(color_list[i]) ;
+    //   point.rgb= *reinterpret_cast<float*>( &rgb );
+    //
+    //   colored_masked_cluster->points.push_back( point );
+    // }
 
+  }
+
+  for(int i=0; i<cluster_indices.size(); ++i){
+    pcl::PointIndices::Ptr indexes(new pcl::PointIndices);
+    *indexes = cluster_indices[i];
     // ASSIGN COLOR TO EACH CLUSTER
     for (int j =0; j<indexes->indices.size(); ++j){
       pcl::PointXYZRGB point ;
@@ -450,6 +513,8 @@ void color_euclidean_clusters_and_get_3D_bounding_boxes(const pcl::PCLPointCloud
       colored_masked_cluster->points.push_back( point );
     }
   }
+
+
 
   colored_masked_cluster->width = colored_masked_cluster->points.size();
   colored_masked_cluster->height = 1;
@@ -557,5 +622,8 @@ int main(int argc, char** argv)
   pb_objects_3D_bbox =  nh.advertise<visualization_msgs::MarkerArray>("/objects_3D_bbox", 1);
 
   ros::Subscriber sub = nh.subscribe<pcl::PCLPointCloud2>("/front_base_footprint/points", 1, cloud_cb);
+
+  tracker.reset(new objectTracker(nh));
+
   ros::spin();
 }
